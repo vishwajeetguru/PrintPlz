@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
+import { ToastProvider } from './components/Toast';
 import { AuthProvider, useAuth } from './lib/auth';
 import { Dashboard } from './pages/Dashboard';
 import { Login } from './pages/Login';
@@ -20,15 +21,17 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/" element={<Guard><Dashboard /></Guard>} />
-          <Route path="/shops" element={<Guard><Shops /></Guard>} />
-          <Route path="/shops/:id" element={<Guard><ShopDetail /></Guard>} />
-          <Route path="/requests" element={<Guard><Requests /></Guard>} />
-          <Route path="/notices" element={<Guard><Notices /></Guard>} />
-          <Route path="/maintenance" element={<Guard><Maintenance /></Guard>} />
-        </Routes>
+        <ToastProvider>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<Guard><Dashboard /></Guard>} />
+            <Route path="/shops" element={<Guard><Shops /></Guard>} />
+            <Route path="/shops/:id" element={<Guard><ShopDetail /></Guard>} />
+            <Route path="/requests" element={<Guard><Requests /></Guard>} />
+            <Route path="/notices" element={<Guard><Notices /></Guard>} />
+            <Route path="/maintenance" element={<Guard><Maintenance /></Guard>} />
+          </Routes>
+        </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
   );

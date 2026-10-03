@@ -109,6 +109,9 @@ model Shop {
   ownerName    String?
   phone        String
   address      String?
+  openTime     String?
+  closeTime    String?
+  workingDays  String?
   isActive     Boolean  @default(true)
   isOnline     Boolean  @default(true)
   qrUrl        String?

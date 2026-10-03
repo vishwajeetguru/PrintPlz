@@ -14,7 +14,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="layout">
       <aside className="sidebar">
-        <div className="brand">PrintPlz Admin</div>
+        <div className="brand">
+          PrintPlz <span>Admin</span>
+        </div>
         {links.map((l) => (
           <NavLink key={l.to} to={l.to} className={({ isActive }) => `navlink${isActive ? ' active' : ''}`}>
             {l.label}

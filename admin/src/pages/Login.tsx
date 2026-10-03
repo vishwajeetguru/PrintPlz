@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Field } from '../components/ui';
 import { api, setTokens } from '../lib/api';
 import { useAuth } from '../lib/auth';
 
@@ -16,10 +17,13 @@ export function Login() {
     setBusy(true);
     setError('');
     try {
-      const res = await api<{ accessToken: string; refreshToken: string; user: { role: string } }>('/api/auth/login-password', {
-        method: 'POST',
-        body: JSON.stringify({ phone, password }),
-      });
+      const res = await api<{ accessToken: string; refreshToken: string; user: { role: string } }>(
+        '/api/auth/login-password',
+        {
+          method: 'POST',
+          body: JSON.stringify({ phone, password }),
+        },
+      );
       if (res.user.role !== 'SUPER_ADMIN') {
         setError('This panel is for superadmins only.');
         return;
@@ -40,17 +44,29 @@ export function Login() {
         <h2 style={{ margin: '0 0 4px' }}>PrintPlz Admin</h2>
         <p className="muted">Superadmin only. Vendors use the mobile app.</p>
         <div style={{ height: 12 }} />
-        <label className="muted">Phone</label>
-        <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91..." />
+        <Field label="Phone">
+          <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91..." />
+        </Field>
         <div style={{ height: 10 }} />
-        <label className="muted">Password</label>
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        {error && <p style={{ color: 'var(--error)', fontSize: 13 }}>{error}</p>}
+        <Field label="Password">
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </Field>
+        {error && (
+          <p role="alert" style={{ color: 'var(--error)', fontSize: 13 }}>
+            {error}
+          </p>
+        )}
         <div style={{ height: 12 }} />
-        <button className="btn" style={{ width: '100%' }} disabled={busy}>
+        <button type="submit" className="btn" style={{ width: '100%' }} disabled={busy}>
           {busy ? 'Signing in…' : 'Sign in'}
         </button>
-        <p className="muted" style={{ marginTop: 12 }}>Seeded: +919000000000 / Super@123</p>
+        <p className="muted" style={{ marginTop: 12 }}>
+          Seeded: +919000000000 / Super@123
+        </p>
       </form>
     </div>
   );

@@ -29,7 +29,7 @@ router.get('/shops/:code', async (req, res) => {
   const maintenance = await prisma.systemSetting.findUnique({ where: { key: 'maintenance_mode' } });
   if (maintenance?.value === 'true') return res.status(503).json({ error: 'MAINTENANCE', message: 'PrintPlz is under maintenance.' });
   return res.json({
-    shop: { shopCode: shop.shopCode, name: shop.name, phone: shop.phone, isOnline: shop.isOnline, priceBw: shop.priceBw, priceColor: shop.priceColor },
+    shop: { shopCode: shop.shopCode, name: shop.name, phone: shop.phone, address: shop.address, openTime: shop.openTime, closeTime: shop.closeTime, workingDays: shop.workingDays, isOnline: shop.isOnline, priceBw: shop.priceBw, priceColor: shop.priceColor },
   });
 });
 

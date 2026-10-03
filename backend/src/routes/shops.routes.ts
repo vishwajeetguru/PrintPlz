@@ -51,6 +51,9 @@ const createSchema = z.object({
   phone: z.string().min(6).max(20),
   address: z.string().max(300).optional(),
   password: z.string().min(6).max(72).optional(),
+  openTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional(),
+  closeTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional(),
+  workingDays: z.string().max(100).optional(),
   priceBw: z.number().int().min(1).max(100).optional(),
   priceColor: z.number().int().min(1).max(500).optional(),
 });
@@ -76,6 +79,9 @@ router.post('/', requireRole('SUPER_ADMIN'), async (req, res) => {
       ownerName: parsed.data.ownerName,
       phone,
       address: parsed.data.address,
+      openTime: parsed.data.openTime,
+      closeTime: parsed.data.closeTime,
+      workingDays: parsed.data.workingDays,
       ownerUserId: user.id,
       qrUrl: `https://printplz.app/shop/${shopCode}`,
       priceBw: parsed.data.priceBw ?? 2,
@@ -96,6 +102,9 @@ const updateSchema = z.object({
   ownerName: z.string().max(120).optional(),
   address: z.string().max(300).optional().nullable(),
   phone: z.string().min(6).max(20).optional(),
+  openTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional().nullable(),
+  closeTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).optional().nullable(),
+  workingDays: z.string().max(100).optional().nullable(),
   isOnline: z.boolean().optional(),
   priceBw: z.number().int().min(1).max(100).optional(),
   priceColor: z.number().int().min(1).max(500).optional(),
@@ -155,6 +164,21 @@ router.post('/:id/reset-password', requireRole('SUPER_ADMIN'), async (req, res) 
   });
   emitToShop(shop.id, Events.NOTIFICATION_NEW, { title: 'Password reset' });
   return res.json({ generatedPassword: parsed.data.password ? undefined : password, success: true });
+});
+
+// Superadmin: permanently delete a shop, its owner login, and all shop data
+router.delete('/:id', requireRole('SUPER_ADMIN'), async (req, res) => {
+  const shop = await prisma.shop.findUnique({ where: { id: req.params.id } });
+  if (!shop) return res.status(404).json({ error: 'Shop not found' });
+  // Delete the owner login first (cascades refresh tokens).
+  // Requests / printers / notifications cascade off the shop delete.
+  if (shop.ownerUserId) {
+    await prisma.user.deleteMany({ where: { id: shop.ownerUserId } });
+  }
+  await prisma.shop.delete({ where: { id: shop.id } });
+  emitToShop(shop.id, Events.SHOP_STATUS, { shopId: shop.id, isActive: false, deleted: true });
+  emitToAll(Events.SHOP_UPDATED, { shopId: shop.id, deleted: true });
+  return res.json({ success: true, shopCode: shop.shopCode });
 });
 
 export default router;

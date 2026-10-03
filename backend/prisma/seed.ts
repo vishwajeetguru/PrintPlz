@@ -31,13 +31,16 @@ async function main() {
 
   const shop = await prisma.shop.upsert({
     where: { shopCode: 'PF-RJC-1024' },
-    update: { name: 'Rajesh Xerox Center', ownerName: 'Rajesh Kumar', phone: vendorPhone, ownerUserId: vendor.id, isActive: true, isOnline: true, qrUrl: 'https://printplz.app/shop/PF-RJC-1024' },
+    update: { name: 'Rajesh Xerox Center', ownerName: 'Rajesh Kumar', phone: vendorPhone, ownerUserId: vendor.id, isActive: true, isOnline: true, openTime: '09:00', closeTime: '21:00', workingDays: 'Mon,Tue,Wed,Thu,Fri,Sat', qrUrl: 'https://printplz.app/shop/PF-RJC-1024' },
     create: {
       shopCode: 'PF-RJC-1024',
       name: 'Rajesh Xerox Center',
       ownerName: 'Rajesh Kumar',
       phone: vendorPhone,
       address: 'Shop 12, MG Road, Bengaluru',
+      openTime: '09:00',
+      closeTime: '21:00',
+      workingDays: 'Mon,Tue,Wed,Thu,Fri,Sat',
       ownerUserId: vendor.id,
       qrUrl: 'https://printplz.app/shop/PF-RJC-1024',
       priceBw: 2,
