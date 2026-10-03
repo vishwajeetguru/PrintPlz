@@ -1,0 +1,191 @@
+// Local-dev schema (no Docker needed). Same models as schema.prisma,
+// but backed by SQLite. Production uses schema.prisma (PostgreSQL).
+// Usage:
+//   npm run db:setup:sqlite   (generate client + push + seed)
+//   npm run dev                (uses DATABASE_URL=file:./dev.db)
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  VENDOR
+}
+
+enum RequestStatus {
+  NEW
+  ACCEPTED
+  PRINTING
+  COMPLETED
+  CANCELLED
+}
+
+enum ColorMode {
+  BW
+  COLOR
+}
+
+enum PaperSize {
+  A4
+  A3
+  LETTER
+  LEGAL
+}
+
+enum PrintSides {
+  SINGLE
+  DOUBLE
+}
+
+enum FileType {
+  PDF
+  JPG
+  PNG
+  DOCX
+}
+
+enum PrinterConnection {
+  WIFI
+  BLUETOOTH
+  USB
+  NETWORK
+}
+
+enum PrinterStatus {
+  CONNECTED
+  OFFLINE
+  PRINTING
+  READY
+  ERROR
+}
+
+enum NotificationType {
+  NEW_REQUEST
+  PRINT_COMPLETED
+  PRINTER_OFFLINE
+  PAYMENT
+  INFO
+  NOTICE
+  SHOP_DEACTIVATED
+  MAINTENANCE
+}
+
+model User {
+  id               String    @id @default(cuid())
+  phone            String    @unique
+  name             String?
+  role             Role      @default(VENDOR)
+  passwordHash     String?
+  mustSetPassword  Boolean   @default(true)
+  isActive         Boolean   @default(true)
+  otpCode          String?
+  otpExpiresAt     DateTime?
+  shop             Shop?     @relation("ShopOwner")
+  refreshTokens    RefreshToken[]
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Shop {
+  id           String   @id @default(cuid())
+  shopCode     String   @unique
+  name         String
+  ownerName    String?
+  phone        String
+  address      String?
+  isActive     Boolean  @default(true)
+  isOnline     Boolean  @default(true)
+  qrUrl        String?
+  priceBw      Int      @default(2)
+  priceColor   Int      @default(10)
+  ownerUserId  String?  @unique
+  owner        User?    @relation("ShopOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
+  requests     PrintRequest[]
+  printers     Printer[]
+  notifications Notification[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([phone])
+}
+
+model PrintRequest {
+  id            String        @id
+  shopId        String
+  shop          Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  documentName  String
+  fileType      FileType      @default(PDF)
+  fileUrl       String?
+  fileSizeBytes Int           @default(0)
+  pages         Int           @default(1)
+  copies        Int           @default(1)
+  colorMode     ColorMode     @default(BW)
+  paperSize     PaperSize     @default(A4)
+  printSides    PrintSides    @default(SINGLE)
+  totalPages    Int           @default(1)
+  amount        Int           @default(0)
+  status        RequestStatus @default(NEW)
+  customerName  String?
+  customerPhone String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([shopId, status])
+  @@index([shopId, createdAt])
+}
+
+model Printer {
+  id             String            @id @default(cuid())
+  shopId         String
+  shop           Shop              @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  name           String
+  connectionType PrinterConnection @default(WIFI)
+  status         PrinterStatus     @default(OFFLINE)
+  isDefault      Boolean           @default(false)
+  paperLevel     Int               @default(100)
+  tonerLevel     String            @default("Good")
+  tonerPercent   Int               @default(100)
+  ipAddress      String?
+  model          String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([shopId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  shopId    String?
+  shop      Shop?            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  broadcast Boolean          @default(false)
+  type      NotificationType @default(INFO)
+  title     String
+  message   String
+  requestId String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([shopId, createdAt])
+}
+
+model SystemSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
